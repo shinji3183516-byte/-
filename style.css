@@ -650,14 +650,16 @@ textarea{
 
 /* ===== 車走行アニメーション：JSのクラスに合わせる ===== */
 .rav4-runner{
+  --runner-stop-gap:10px;
   position:absolute;
   z-index:6;
   top:var(--rav4-top);
-  left:0;
+  /* 年表コンテナの中央線を基準に走行・停止します */
+  left:50%;
   width:var(--runner-width);
   max-width:260px;
   pointer-events:none;
-  transform:translateX(calc(100vw + 180px));
+  transform:translateX(calc(50vw + 180px));
   opacity:0;
 }
 
@@ -687,12 +689,15 @@ textarea{
 }
 
 @keyframes runnerPass{
-  0%{ transform:translateX(calc(100vw + 190px)); opacity:0; }
+  /* left:50% を基準にするため、停止時の -50% で車画像の中心が中央線に一致します */
+  0%{ transform:translateX(calc(50vw + 190px)); opacity:0; }
   8%{ opacity:1; }
-  43%{ transform:translateX(calc(50vw - 50%)); opacity:1; }
-  55.5%{ transform:translateX(calc(50vw - 50%)); opacity:1; }
+  /* 車は右から左へ走るため、車体の左端（進行方向の先端）を
+     センター線の少し手前で停止させます。 */
+  43%{ transform:translateX(calc(var(--runner-stop-gap, 10px) + var(--runner-stop-offset, 0px))); opacity:1; }
+  55.5%{ transform:translateX(calc(var(--runner-stop-gap, 10px) + var(--runner-stop-offset, 0px))); opacity:1; }
   88%{ opacity:1; }
-  100%{ transform:translateX(calc(-1 * var(--runner-width) - 210px)); opacity:0; }
+  100%{ transform:translateX(calc(-50vw - 100% - 210px)); opacity:0; }
 }
 
 .all-cars-parade{
@@ -3693,4 +3698,53 @@ h1 span{
 .cycle-timer-unit{
   color:rgba(255,255,255,.72);
   font-size:12px;
+}
+
+/* =========================================================
+   SELECTED YEAR 年度色連動
+   - 年表・下段4コンテナ移動中：白
+   - 下段4コンテナ停止・表示確定時：ゴールド
+   ========================================================= */
+#selectedYear{
+  color:#f7f4e8 !important;
+  transition:
+    color .45s ease,
+    text-shadow .45s ease,
+    transform .45s ease;
+}
+
+body #selectedYear.year-stopped{
+  color:var(--gold2, #f7d879) !important;
+  text-shadow:
+    0 0 8px rgba(247,216,121,.78),
+    0 0 22px rgba(218,178,78,.48),
+    0 1px 0 rgba(255,255,255,.18) !important;
+  transform:scale(1.03);
+}
+
+
+/* =========================================================
+   センター年表カード：停止時の年度・年号ゴールド連動
+   - 移動中：年度・年号は白
+   - センター停止中：年度・年号をゴールド
+   - カード外周の既存ゴールド光は消さず、そのまま維持
+   ========================================================= */
+.year-node .era,
+.year-node .wheel strong{
+  transition:
+    color .38s ease,
+    text-shadow .38s ease;
+}
+
+body.timeline-year-stopped .year-node.active .era,
+body.timeline-year-stopped .year-node.is-active .era,
+body.timeline-year-stopped .year-node.selected .era,
+body.timeline-year-stopped .year-node.active .wheel strong,
+body.timeline-year-stopped .year-node.is-active .wheel strong,
+body.timeline-year-stopped .year-node.selected .wheel strong{
+  color:var(--gold2, #f7d879) !important;
+  text-shadow:
+    0 0 7px rgba(247,216,121,.88),
+    0 0 18px rgba(218,178,78,.62),
+    0 1px 0 rgba(255,255,255,.2) !important;
 }

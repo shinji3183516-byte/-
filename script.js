@@ -53,6 +53,7 @@ let activeDriveBackgroundLayer = 0;
 // width    : 車画像の大きさ
 // top      : 車全体の走行高さ。数字を大きくすると車が下がります。
 // lightTop : ヘッドライトだけの高さ。車の top とは別に調整できます。
+// stopOffset: 中央線停止位置の横補正。通常は "0px"。車画像の透明余白がある場合だけ調整します。
 //            %の数字を大きくするとライトが下がり、小さくすると上がります。
 //            Levinは画像の形状が他車と違うため、専用に大きめの値にしています。
 const ERA_RUNNER_CARS = [
@@ -63,7 +64,8 @@ const ERA_RUNNER_CARS = [
     alt: "Corolla 60th",
     width: "clamp(210px, 20vw, 340px)",
     top: "22px",
-    lightTop: "48%"
+    lightTop: "48%",
+    stopOffset: "0px"
   },
   {
     from: 1970,
@@ -74,7 +76,8 @@ const ERA_RUNNER_CARS = [
     top: "24px",
     // 1970年カローラ：前回より少し下げ、ライトを車体前端の高さに合わせます。
     // 微調整：高い場合は +18px、低い場合は +10px に戻してください。
-    lightTop: "calc(48% + 15px)"
+    lightTop: "calc(48% + 15px)",
+    stopOffset: "0px"
   },
   {
     from: 1980,
@@ -83,7 +86,8 @@ const ERA_RUNNER_CARS = [
     alt: "Levin",
     width: "clamp(210px, 20vw, 340px)",
     top: "28px",
-    lightTop: "64%"
+    lightTop: "64%",
+    stopOffset: "0px"
   },
   {
     from: 1990,
@@ -92,7 +96,8 @@ const ERA_RUNNER_CARS = [
     alt: "Prius",
     width: "clamp(210px, 20vw, 340px)",
     top: "26px",
-    lightTop: "48%"
+    lightTop: "48%",
+    stopOffset: "0px"
   },
   {
     from: 2000,
@@ -101,7 +106,8 @@ const ERA_RUNNER_CARS = [
     alt: "iQ",
     width: "clamp(90px, 8.5vw, 145px)",
     top: "34px",
-    lightTop: "48%"
+    lightTop: "48%",
+    stopOffset: "0px"
   },
   {
     from: 2010,
@@ -112,7 +118,8 @@ const ERA_RUNNER_CARS = [
     top: "24px",
     // hayy：SUVボディでライトが高く見えやすいため、前回よりさらに下げます。
     // 微調整：まだ高い場合は +25px、低い場合は +18px にしてください。
-    lightTop: "calc(48% + 22px)"
+    lightTop: "calc(48% + 22px)",
+    stopOffset: "0px"
   },
   {
     from: 2020,
@@ -121,7 +128,8 @@ const ERA_RUNNER_CARS = [
     alt: "RAV4 Silver",
     width: "clamp(190px, 17vw, 290px)",
     top: "24px",
-    lightTop: "48%"
+    lightTop: "48%",
+    stopOffset: "0px"
   }
 ];
 
@@ -929,6 +937,19 @@ const clearEditorAdditions = document.getElementById("clearEditorAdditions");
 const editorYearLabel = document.getElementById("editorYearLabel");
 const cycleRemainingSeconds = document.getElementById("cycleRemainingSeconds");
 
+// SELECTED YEAR の年度色：移動中は白、下段4コンテナ停止時はゴールド。
+function setSelectedYearStopped(isStopped) {
+  const stopped = Boolean(isStopped);
+
+  if (selectedYear) {
+    selectedYear.classList.toggle("year-stopped", stopped);
+  }
+
+  // ヘッダー下のセンター年表カードも停止状態に連動させます。
+  // 停止中のみ年度・年号をゴールドにし、外周のゴールド光は維持します。
+  document.body.classList.toggle("timeline-year-stopped", stopped);
+}
+
 const sectionConfig = {
   car: {
     container: carContent,
@@ -1250,6 +1271,9 @@ function applyData(index, options) {
 }
 
 function showData(index, immediate) {
+  // 直接選択・初期表示では、表示内容が確定しているためゴールドにします。
+  setSelectedYearStopped(true);
+
   const card = document.querySelector(".main-card");
   if (card) {
     card.classList.remove("slide-out-to-left", "slide-in-from-right", "slide-in-active");
@@ -1284,6 +1308,9 @@ function getNodeStep() {
 
 function prepareContinuousLowerSlide(direction, startTime) {
   if (continuousLowerSlide.running) return;
+
+  // 年表と下段4コンテナが動き始める瞬間に年度を白へ戻します。
+  setSelectedYearStopped(false);
 
   const card = document.querySelector(".main-card");
   const page = document.querySelector(".page");
@@ -1354,6 +1381,9 @@ function updateContinuousLowerSlide(currentTime) {
   // 上段が停止位置へ到着する同じフレームで、下段も定位置へ到着します。
   continuousLowerSlide.running = false;
   continuousLowerSlide.outgoing = null;
+
+  // 下段4コンテナが停止位置に到着した瞬間、年度をゴールドへ変更します。
+  setSelectedYearStopped(true);
 
   return true;
 }
@@ -1926,6 +1956,9 @@ function createRav4Runner() {
     runner.style.setProperty("--runner-light-top", initialCar.lightTop);
   }
 
+  // 車画像の中心を年表中央線へ合わせます。透明余白がある画像だけ stopOffset で微調整できます。
+  runner.style.setProperty("--runner-stop-offset", (initialCar && initialCar.stopOffset) || "0px");
+
   runner.appendChild(light);
   runner.appendChild(car);
   timelineFrame.appendChild(runner);
@@ -1956,6 +1989,9 @@ function runRav4Once() {
     // ヘッドライトだけの高さを単独で反映します。
     // selectedCar.lightTop がない車は、従来どおり 48% を使います。
     runner.style.setProperty("--runner-light-top", selectedCar.lightTop || "48%");
+
+    // 停止時、車画像の中心を年表の中央線へ正確に合わせます。
+    runner.style.setProperty("--runner-stop-offset", selectedCar.stopOffset || "0px");
   }
 
   // 同じアニメーションを確実に再スタートさせます。
