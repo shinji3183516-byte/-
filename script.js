@@ -2422,3 +2422,117 @@ window.addEventListener("keydown", function(event) {
 /* v8: 上段の停止位置はカード実測値から毎回再計算し、必ず中央線へ固定。 */
 
 /* v9 完全同期：上下は同一開始時刻・同一duration・同一progress。起動時1966位置をSafari向け多段固定。 */
+
+/* =========================================================
+   デジタル年表 オープニング制御
+   ========================================================= */
+(() => {
+  const openingPage = document.getElementById("openingPage");
+  const startButton = document.getElementById("openingStartButton");
+  const meterProgress = document.getElementById("openingMeterProgress");
+  const meterNeedle = document.getElementById("openingMeterNeedle");
+  const meterValue = document.getElementById("openingMeterValue");
+  const meterLabel = document.getElementById("openingMeterLabel");
+
+  if (
+    !openingPage ||
+    !startButton ||
+    !meterProgress ||
+    !meterNeedle ||
+    !meterValue ||
+    !meterLabel
+  ) {
+    return;
+  }
+
+  const ARC_LENGTH = 314.2;
+  let openingRunning = false;
+
+  function setMeter(value) {
+    const progress = Math.max(0, Math.min(100, value));
+    const offset = ARC_LENGTH - (ARC_LENGTH * progress / 100);
+    const rotation = -90 + (180 * progress / 100);
+
+    meterProgress.style.strokeDashoffset = String(offset);
+    meterNeedle.style.transform = `rotate(${rotation}deg)`;
+    meterValue.textContent = `${Math.round(progress)}%`;
+
+    if (progress < 28) {
+      meterLabel.textContent = "HISTORY";
+    } else if (progress < 67) {
+      meterLabel.textContent = "PRESENT";
+    } else if (progress < 100) {
+      meterLabel.textContent = "TO THE FUTURE";
+    } else {
+      meterLabel.textContent = "START";
+    }
+  }
+
+  function pauseTimelineBehindOpening() {
+    const pause = document.getElementById("pauseButton");
+    if (pause) {
+      pause.click();
+    }
+  }
+
+  function startTimelineAfterOpening() {
+    const play = document.getElementById("playButton");
+    if (play) {
+      play.click();
+    }
+  }
+
+  function runOpening() {
+    if (openingRunning) return;
+
+    openingRunning = true;
+    openingPage.classList.add("is-loading");
+    startButton.disabled = true;
+    startButton.querySelector("span").textContent = "LOADING";
+
+    const duration = 3300;
+    const startedAt = performance.now();
+
+    function frame(now) {
+      const elapsed = now - startedAt;
+      const timeProgress = Math.min(elapsed / duration, 1);
+
+      /*
+        最初は落ち着いて動き、現在を越えて未来側で加速。
+        最後は滑らかに100%へ収束します。
+      */
+      const eased = timeProgress < 0.58
+        ? 1.28 * timeProgress * timeProgress
+        : 1 - Math.pow(1 - timeProgress, 3);
+
+      setMeter(Math.min(100, eased * 100));
+
+      if (timeProgress < 1) {
+        window.requestAnimationFrame(frame);
+        return;
+      }
+
+      setMeter(100);
+
+      window.setTimeout(() => {
+        openingPage.classList.add("is-finished");
+        document.body.classList.remove("opening-active");
+        startTimelineAfterOpening();
+
+        window.setTimeout(() => {
+          openingPage.remove();
+        }, 1300);
+      }, 650);
+    }
+
+    window.requestAnimationFrame(frame);
+  }
+
+  window.addEventListener("load", () => {
+    pauseTimelineBehindOpening();
+    setMeter(0);
+  }, { once: true });
+
+  startButton.addEventListener("click", runOpening);
+})();
+

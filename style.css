@@ -3748,3 +3748,305 @@ body.timeline-year-stopped .year-node.selected .wheel strong{
     0 0 18px rgba(218,178,78,.62),
     0 1px 0 rgba(255,255,255,.2) !important;
 }
+
+/* =========================================================
+   大型モニター対応 オープニング画面
+   背景画像: images/opening/top-page.jpg
+   ========================================================= */
+
+body.opening-active {
+  overflow: hidden;
+}
+
+.opening-page {
+  position: fixed;
+  inset: 0;
+  z-index: 50000;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  overflow: hidden;
+  color: #fff;
+  background-color: #07111b;
+  background-image: url("images/opening/top-page.jpg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  opacity: 1;
+  visibility: visible;
+  isolation: isolate;
+  transition: opacity 1.15s ease, visibility 1.15s ease;
+}
+
+.opening-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 98%, rgba(2, 12, 24, .18) 0%, rgba(2, 12, 24, 0) 48%),
+    linear-gradient(180deg, rgba(0, 0, 0, .02) 0%, rgba(0, 0, 0, .04) 56%, rgba(0, 9, 20, .28) 100%);
+}
+
+.opening-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(245, 183, 77, .05),
+    transparent 36%,
+    transparent 64%,
+    rgba(77, 212, 255, .05)
+  );
+}
+
+.opening-page__shade {
+  position: absolute;
+  left: 50%;
+  bottom: -4%;
+  width: min(48vw, 920px);
+  height: min(39vh, 430px);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(3, 15, 29, .76) 0%,
+    rgba(3, 15, 29, .51) 48%,
+    rgba(3, 15, 29, 0) 76%
+  );
+  filter: blur(8px);
+}
+
+.opening-controls {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(20px, 3.2vh, 62px);
+  z-index: 3;
+  display: flex;
+  width: min(36vw, 700px);
+  min-width: 420px;
+  transform: translateX(-50%);
+  flex-direction: column;
+  align-items: center;
+}
+
+.opening-meter {
+  position: relative;
+  width: clamp(215px, 15vw, 330px);
+  aspect-ratio: 260 / 155;
+  margin-bottom: clamp(6px, .7vh, 12px);
+  filter:
+    drop-shadow(-8px 0 12px rgba(245, 183, 77, .34))
+    drop-shadow(8px 0 12px rgba(77, 212, 255, .34));
+}
+
+.opening-meter__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.opening-meter__track,
+.opening-meter__progress {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.opening-meter__track {
+  stroke: rgba(255, 255, 255, .20);
+}
+
+.opening-meter__progress {
+  stroke: url(#openingMeterGradient);
+  stroke-dasharray: 314.2;
+  stroke-dashoffset: 314.2;
+  transition: stroke-dashoffset .07s linear;
+}
+
+.opening-meter__ticks line {
+  stroke: rgba(255, 255, 255, .78);
+  stroke-width: 2;
+}
+
+.opening-meter__needle {
+  transform-origin: 130px 130px;
+  transform: rotate(-90deg);
+  transition: transform .07s linear;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, .9));
+}
+
+.opening-meter__needle line {
+  stroke: #fff;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.opening-meter__needle circle {
+  fill: #fff;
+}
+
+.opening-meter__readout {
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  display: flex;
+  width: 100%;
+  transform: translateX(-50%);
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-family: "Segoe UI", "Noto Sans JP", system-ui, sans-serif;
+  text-shadow: 0 2px 9px rgba(0, 0, 0, .8);
+}
+
+.opening-meter__readout strong {
+  color: #fff;
+  font-size: clamp(30px, 2.7vw, 54px);
+  font-weight: 300;
+  line-height: .96;
+  letter-spacing: .02em;
+}
+
+.opening-meter__readout span {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, .94);
+  font-size: clamp(10px, .72vw, 14px);
+  font-weight: 600;
+  letter-spacing: .20em;
+}
+
+.opening-start-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(34vw, 650px);
+  min-width: 400px;
+  min-height: clamp(64px, 6.8vh, 92px);
+  padding: 14px 78px 14px 48px;
+  border: 2px solid rgba(255, 255, 255, .90);
+  border-radius: 999px;
+  color: #fff;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(95, 53, 17, .78) 0%,
+      rgba(6, 29, 51, .92) 45%,
+      rgba(5, 51, 82, .88) 100%
+    );
+  box-shadow:
+    -12px 0 28px rgba(245, 183, 77, .36),
+    12px 0 30px rgba(77, 212, 255, .40),
+    inset 0 0 22px rgba(255, 255, 255, .09);
+  backdrop-filter: blur(8px);
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: clamp(24px, 2.15vw, 42px);
+  font-weight: 600;
+  letter-spacing: .11em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .68);
+  cursor: pointer;
+  transition:
+    transform .24s ease,
+    box-shadow .24s ease,
+    opacity .32s ease;
+}
+
+.opening-start-button__arrow {
+  position: absolute;
+  right: 38px;
+  top: 50%;
+  transform: translateY(-55%);
+  font-family: Arial, sans-serif;
+  font-size: 1.55em;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.opening-start-button:hover {
+  transform: scale(1.025);
+  box-shadow:
+    -15px 0 36px rgba(245, 183, 77, .50),
+    15px 0 38px rgba(77, 212, 255, .54),
+    inset 0 0 28px rgba(255, 255, 255, .13);
+}
+
+.opening-start-button:focus-visible {
+  outline: 4px solid #fff;
+  outline-offset: 6px;
+}
+
+.opening-start-button:disabled {
+  opacity: .58;
+  cursor: default;
+  transform: none;
+}
+
+.opening-controls__caption {
+  margin: clamp(8px, 1vh, 14px) 0 0;
+  color: rgba(255, 255, 255, .92);
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: clamp(14px, 1.05vw, 20px);
+  letter-spacing: .13em;
+  text-shadow: 0 2px 9px rgba(0, 0, 0, .82);
+}
+
+.opening-page.is-loading .opening-start-button {
+  pointer-events: none;
+}
+
+.opening-page.is-finished {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 16:9大型モニター（Full HD / 4K） */
+@media (min-width: 1600px) and (min-aspect-ratio: 16/10) {
+  .opening-page {
+    background-position: center 48%;
+  }
+
+  .opening-controls {
+    bottom: clamp(20px, 2.8vh, 58px);
+  }
+}
+
+/* 縦が低いモニターでも操作部を収める */
+@media (max-height: 780px) {
+  .opening-controls {
+    bottom: 12px;
+    transform: translateX(-50%) scale(.84);
+    transform-origin: center bottom;
+  }
+}
+
+/* 画面幅が狭い場合の保険 */
+@media (max-width: 900px) {
+  .opening-controls {
+    width: 84vw;
+    min-width: 0;
+  }
+
+  .opening-start-button {
+    width: min(78vw, 560px);
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .opening-page,
+  .opening-meter__progress,
+  .opening-meter__needle,
+  .opening-start-button {
+    transition-duration: .01ms !important;
+  }
+}
+
