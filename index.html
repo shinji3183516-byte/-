@@ -16,54 +16,91 @@
        デジタル年表 オープニング
        背景画像: images/opening/top-page.jpg
   ======================================================= -->
-  <section id="openingPage" class="opening-page" aria-label="高岡工場60周年デジタル年表 オープニング">
-   <div class="opening-page__shade" aria-hidden="true"></div>
+<section
+  id="openingPage"
+  class="opening-page"
+  aria-label="高岡工場60周年デジタル年表 オープニング"
+>
+ 
+  <div class="opening-page__shade" aria-hidden="true"></div>
 
-   <div class="opening-controls">
+  <div class="opening-controls">
     <div class="opening-meter" aria-live="polite">
-     <svg class="opening-meter__svg" viewBox="0 0 260 155" role="img" aria-label="年表読み込みメーター">
-      <defs>
-       <linearGradient id="openingMeterGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="#f5b74d"/>
-        <stop offset="48%" stop-color="#fff7d1"/>
-        <stop offset="100%" stop-color="#4dd4ff"/>
-       </linearGradient>
-      </defs>
+      <svg
+        class="opening-meter__svg"
+        viewBox="0 0 260 155"
+        role="img"
+        aria-label="年表読み込みメーター"
+      >
+        <defs>
+          <linearGradient
+            id="openingMeterGradient"
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="0%"
+          >
+            <stop offset="0%" stop-color="#f5b74d"></stop>
+            <stop offset="48%" stop-color="#fff7d1"></stop>
+            <stop offset="100%" stop-color="#4dd4ff"></stop>
+          </linearGradient>
+        </defs>
 
-      <path class="opening-meter__track" d="M30 130 A100 100 0 0 1 230 130"></path>
-      <path id="openingMeterProgress" class="opening-meter__progress" d="M30 130 A100 100 0 0 1 230 130"></path>
+        <path
+          class="opening-meter__track"
+          d="M30 130 A100 100 0 0 1 230 130"
+        ></path>
 
-      <g class="opening-meter__ticks" aria-hidden="true">
-       <line x1="30" y1="130" x2="43" y2="130"></line>
-       <line x1="43" y1="80" x2="55" y2="87"></line>
-       <line x1="80" y1="43" x2="87" y2="55"></line>
-       <line x1="130" y1="30" x2="130" y2="44"></line>
-       <line x1="180" y1="43" x2="173" y2="55"></line>
-       <line x1="217" y1="80" x2="205" y2="87"></line>
-       <line x1="230" y1="130" x2="217" y2="130"></line>
-      </g>
+        <path
+          id="openingMeterProgress"
+          class="opening-meter__progress"
+          d="M30 130 A100 100 0 0 1 230 130"
+        ></path>
 
-      <g id="openingMeterNeedle" class="opening-meter__needle" aria-hidden="true">
-       <line x1="130" y1="130" x2="130" y2="57"></line>
-       <circle cx="130" cy="130" r="7"></circle>
-      </g>
-     </svg>
+        <g class="opening-meter__ticks" aria-hidden="true">
+          <line x1="30" y1="130" x2="43" y2="130"></line>
+          <line x1="43" y1="80" x2="55" y2="87"></line>
+          <line x1="80" y1="43" x2="87" y2="55"></line>
+          <line x1="130" y1="30" x2="130" y2="44"></line>
+          <line x1="180" y1="43" x2="173" y2="55"></line>
+          <line x1="217" y1="80" x2="205" y2="87"></line>
+          <line x1="230" y1="130" x2="217" y2="130"></line>
+        </g>
 
-     <div class="opening-meter__readout">
-      <strong id="openingMeterValue">0%</strong>
-      <span id="openingMeterLabel">READY</span>
-     </div>
+        <g
+          id="openingMeterNeedle"
+          class="opening-meter__needle"
+          aria-hidden="true"
+        >
+          <line x1="130" y1="130" x2="130" y2="57"></line>
+          <circle cx="130" cy="130" r="7"></circle>
+        </g>
+      </svg>
+
+      <div class="opening-meter__readout">
+        <strong id="openingMeterValue">0%</strong>
+        <span id="openingMeterLabel">READY</span>
+      </div>
     </div>
 
-    <button id="openingStartButton" class="opening-start-button" type="button">
-     <span>年表をはじめる</span>
-     <span class="opening-start-button__arrow" aria-hidden="true">›</span>
+    <button
+      id="openingStartButton"
+      class="opening-start-button"
+      type="button"
+    >
+      <span>年表をはじめる</span>
+      <span
+        class="opening-start-button__arrow"
+        aria-hidden="true"
+      >›</span>
     </button>
 
-    <p class="opening-controls__caption">未来へ続く物語をめぐる</p>
-   </div>
-  </section>
-
+    <p class="opening-controls__caption">
+      未来へ続く物語をめぐる
+    </p>
+  </div>
+</section>
+``
   <main class="page">
    <header class="header">
     <div class="title-area">

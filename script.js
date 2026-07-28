@@ -2426,7 +2426,7 @@ window.addEventListener("keydown", function(event) {
 /* =========================================================
    デジタル年表 オープニング制御
    ========================================================= */
-(() => {
+ (() => {
   const openingPage = document.getElementById("openingPage");
   const startButton = document.getElementById("openingStartButton");
   const meterProgress = document.getElementById("openingMeterProgress");
@@ -2442,16 +2442,65 @@ window.addEventListener("keydown", function(event) {
     !meterValue ||
     !meterLabel
   ) {
+    console.error("オープニングに必要な要素が見つかりません。");
     return;
+  }
+
+  /*
+   * TOP動画をJavaScriptで作成します。
+   * HTML側へvideoタグを追加する必要はありません。
+   */
+  const openingMovie = document.createElement("video");
+
+  openingMovie.id = "openingMovie";
+  openingMovie.src = "./movie/top.mp4";
+  openingMovie.preload = "auto";
+  openingMovie.muted = true;
+  openingMovie.playsInline = true;
+
+  openingMovie.style.position = "absolute";
+  openingMovie.style.inset = "0";
+  openingMovie.style.width = "100%";
+  openingMovie.style.height = "100%";
+  openingMovie.style.objectFit = "cover";
+  openingMovie.style.backgroundColor = "#000000";
+  openingMovie.style.zIndex = "0";
+
+  /*
+   * openingPageの一番最初へ動画を配置します。
+   * shade、メーター、ボタンは動画より手前に残ります。
+   */
+  openingPage.insertBefore(
+    openingMovie,
+    openingPage.firstChild
+  );
+
+  const shade = openingPage.querySelector(".opening-page__shade");
+  const controls = openingPage.querySelector(".opening-controls");
+
+  if (shade) {
+    shade.style.position = "absolute";
+    shade.style.inset = "0";
+    shade.style.zIndex = "1";
+  }
+
+  if (controls) {
+    controls.style.position = "relative";
+    controls.style.zIndex = "2";
   }
 
   const ARC_LENGTH = 314.2;
   let openingRunning = false;
+  let openingFinished = false;
 
   function setMeter(value) {
     const progress = Math.max(0, Math.min(100, value));
-    const offset = ARC_LENGTH - (ARC_LENGTH * progress / 100);
-    const rotation = -90 + (180 * progress / 100);
+
+    const offset =
+      ARC_LENGTH - (ARC_LENGTH * progress / 100);
+
+    const rotation =
+      -90 + (180 * progress / 100);
 
     meterProgress.style.strokeDashoffset = String(offset);
     meterNeedle.style.transform = `rotate(${rotation}deg)`;
@@ -2469,70 +2518,154 @@ window.addEventListener("keydown", function(event) {
   }
 
   function pauseTimelineBehindOpening() {
-    const pause = document.getElementById("pauseButton");
-    if (pause) {
-      pause.click();
+    const pauseButton =
+      document.getElementById("pauseButton");
+
+    if (pauseButton) {
+      pauseButton.click();
     }
   }
 
   function startTimelineAfterOpening() {
-    const play = document.getElementById("playButton");
-    if (play) {
-      play.click();
+    const playButton =
+      document.getElementById("playButton");
+
+    if (playButton) {
+      playButton.click();
     }
   }
 
-  function runOpening() {
-    if (openingRunning) return;
+  function finishOpening() {
+    if (openingFinished) {
+      return;
+    }
+
+    openingFinished = true;
+    setMeter(100);
+
+    openingPage.classList.add("is-finished");
+    document.body.classList.remove("opening-active");
+
+    startTimelineAfterOpening();
+
+    window.setTimeout(() => {
+      openingPage.remove();
+    }, 1300);
+  }
+
+  async function runOpening() {
+    if (openingRunning) {
+      return;
+    }
 
     openingRunning = true;
+
     openingPage.classList.add("is-loading");
     startButton.disabled = true;
-    startButton.querySelector("span").textContent = "LOADING";
 
-    const duration = 3300;
-    const startedAt = performance.now();
+    const buttonText =
+      startButton.querySelector("span");
 
-    function frame(now) {
-      const elapsed = now - startedAt;
-      const timeProgress = Math.min(elapsed / duration, 1);
-
-      /*
-        最初は落ち着いて動き、現在を越えて未来側で加速。
-        最後は滑らかに100%へ収束します。
-      */
-      const eased = timeProgress < 0.58
-        ? 1.28 * timeProgress * timeProgress
-        : 1 - Math.pow(1 - timeProgress, 3);
-
-      setMeter(Math.min(100, eased * 100));
-
-      if (timeProgress < 1) {
-        window.requestAnimationFrame(frame);
-        return;
-      }
-
-      setMeter(100);
-
-      window.setTimeout(() => {
-        openingPage.classList.add("is-finished");
-        document.body.classList.remove("opening-active");
-        startTimelineAfterOpening();
-
-        window.setTimeout(() => {
-          openingPage.remove();
-        }, 1300);
-      }, 650);
+    if (buttonText) {
+      buttonText.textContent = "LOADING";
     }
 
-    window.requestAnimationFrame(frame);
+    try {
+      openingMovie.pause();
+      openingMovie.currentTime = 0;
+
+      await openingMovie.play();
+
+      /*
+       * 再生が成功したら、既存のメーターと
+       * ボタンを隠して動画全体を見せます。
+       */
+      
+        startButton.style.display = "non*";
+      
+    } catch (error) {
+      openingRunning = false;
+      startButton.disabled = false;
+
+      if (buttonText) {
+        buttonText.textContent = "年表をはじめる";
+      }
+
+      console.error(
+        "動画の再生に失敗しました。",
+        error
+      );
+
+      alert(
+        "動画を再生できませんでした。movie/top.mp4を確認してください。"
+      );
+    }
   }
 
-  window.addEventListener("load", () => {
-    pauseTimelineBehindOpening();
-    setMeter(0);
-  }, { once: true });
+  /*
+   * 動画の現在位置を、既存SVGメーターへ反映します。
+   */
+  openingMovie.addEventListener("timeupdate", () => {
+    if (
+      !Number.isFinite(openingMovie.duration) ||
+      openingMovie.duration <= 0
+    ) {
+      return;
+    }
 
-  startButton.addEventListener("click", runOpening);
+    const progress =
+      (openingMovie.currentTime /
+        openingMovie.duration) * 100;
+
+    setMeter(progress);
+  });
+
+  /*
+   * 動画終了＝メーター100％として、年表を開始します。
+   */
+  openingMovie.addEventListener(
+    "ended",
+    finishOpening
+  );
+
+  openingMovie.addEventListener("error", () => {
+    openingRunning = false;
+    startButton.disabled = false;
+
+    const buttonText =
+      startButton.querySelector("span");
+
+    if (buttonText) {
+      buttonText.textContent = "年表をはじめる";
+    }
+
+    console.error(
+      "動画ファイルを読み込めません。",
+      openingMovie.error
+    );
+
+    alert(
+      "movie/top.mp4を読み込めませんでした。"
+    );
+  });
+
+  /*
+   * 初期状態：
+   * 動画は停止、メーターは0％、年表本体は一時停止。
+   */
+  window.addEventListener(
+    "load",
+    () => {
+      pauseTimelineBehindOpening();
+
+      openingMovie.pause();
+      setMeter(0);
+    },
+    { once: true }
+  );
+
+  startButton.addEventListener(
+    "click",
+    runOpening
+  );
 })();
-
