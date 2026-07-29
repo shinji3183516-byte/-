@@ -4051,12 +4051,132 @@ body.opening-active {
 }
 
 
-/* ===== トップページ：テーマ選択 ===== */
-.opening-theme-picker{width:min(92vw,760px);padding:14px 16px;border:1px solid rgba(255,255,255,.28);border-radius:18px;background:rgba(0,0,0,.34);backdrop-filter:blur(10px);}
-.opening-theme-picker__title{margin:0 0 10px;color:#fff;font-size:14px;font-weight:700;letter-spacing:.12em;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.55);}
-.opening-theme-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;}
-.theme-select-button{min-height:42px;padding:8px;border:1px solid rgba(255,255,255,.36);border-radius:999px;color:#fff;background:rgba(10,10,10,.56);font-weight:700;cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;}
-.theme-select-button:hover{transform:translateY(-2px);}
-.theme-select-button.is-active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.24),0 0 22px rgba(255,255,255,.28);}
-.theme-select-button:focus-visible{outline:3px solid rgba(255,255,255,.82);outline-offset:3px;}
-@media(max-width:700px){.opening-theme-options{grid-template-columns:repeat(2,minmax(0,1fr));}.theme-select-button:last-child{grid-column:1/-1;}}
+/* ===== トップページ：右下テーマ選択 ===== */
+.opening-theme-picker {
+  position: absolute;
+  right: clamp(22px, 3vw, 64px);
+  bottom: clamp(74px, 9vh, 132px);
+  z-index: 4;
+  width: clamp(190px, 13vw, 250px);
+  padding: 16px 16px 18px;
+  border: 1px solid rgba(255, 255, 255, .34);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(2, 12, 24, .72), rgba(7, 24, 40, .48));
+  box-shadow: 0 14px 38px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .12);
+  backdrop-filter: blur(11px) saturate(118%);
+  -webkit-backdrop-filter: blur(11px) saturate(118%);
+}
+
+.opening-theme-picker__title {
+  margin: 0 0 12px;
+  color: #fff;
+  font-size: clamp(13px, .82vw, 16px);
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-align: left;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .62);
+}
+
+.opening-theme-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.theme-select-button {
+  position: relative;
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px 8px 38px;
+  border: 1px solid rgba(255, 255, 255, .30);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, .94);
+  background: rgba(5, 15, 27, .52);
+  font: inherit;
+  font-size: clamp(12px, .78vw, 15px);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.theme-select-button::before {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  transform: translateY(-50%);
+  border: 1.5px solid rgba(255, 255, 255, .82);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, .04);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .18);
+}
+
+.theme-select-button:hover {
+  transform: translateX(-3px);
+  border-color: rgba(255, 255, 255, .62);
+  background: rgba(15, 35, 54, .70);
+}
+
+.theme-select-button.is-active {
+  border-color: rgba(255, 255, 255, .90);
+  background: linear-gradient(90deg, rgba(111, 67, 18, .70), rgba(9, 48, 75, .80));
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .14), 0 0 22px rgba(77, 212, 255, .18);
+}
+
+.theme-select-button.is-active::before {
+  background: #fff;
+  box-shadow: inset 0 0 0 3px rgba(16, 48, 72, .82), 0 0 9px rgba(255, 255, 255, .72);
+}
+
+.theme-select-button:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, .88);
+  outline-offset: 3px;
+}
+
+@media (max-height: 780px) {
+  .opening-theme-picker {
+    bottom: 22px;
+    transform: scale(.84);
+    transform-origin: right bottom;
+  }
+}
+
+@media (max-width: 900px) {
+  .opening-theme-picker {
+    right: 14px;
+    bottom: 18px;
+    width: min(42vw, 230px);
+    padding: 12px;
+  }
+
+  .theme-select-button {
+    min-height: 36px;
+    padding-left: 34px;
+  }
+}
+
+@media (max-width: 620px) {
+  .opening-theme-picker {
+    left: 50%;
+    right: auto;
+    bottom: 12px;
+    width: min(92vw, 500px);
+    transform: translateX(-50%);
+  }
+
+  .opening-theme-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .theme-select-button:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
