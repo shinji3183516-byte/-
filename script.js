@@ -912,6 +912,7 @@ const timelineData = [
     }
   }
 ];
+let excelTimelineData = [];
 
 const timelineFrame = document.getElementById("timelineFrame");
 const timelineTrack = document.getElementById("timelineTrack");
@@ -1011,7 +1012,7 @@ function saveLocalAdditions() {
 }
 
 function getCurrentItem() {
-  return timelineData[activeIndex];
+  return excelTimelineData[activeIndex];
 }
 
 function normalizeSectionKey(sectionKey) {
@@ -1240,7 +1241,7 @@ function getPresentationFallback(index) {
 
 function applyData(index, options) {
   options = options || {};
-  const item = timelineData[index];
+  const item = excelTimelineData[index];
   if (!item) return;
 
   selectedYear.textContent = item.year;
@@ -1437,7 +1438,14 @@ function createNode(item, index, loopIndex) {
 }
 
 function buildTimeline() {
-  timelineTrack.innerHTML = "";
+
+console.log("年表件数");
+console.log(timelineData.length);
+
+console.log("Excel件数");
+console.log(excelTimelineData.length);
+
+timelineTrack.innerHTML = "";
 
   for (let loop = 0; loop < LOOP_COUNT; loop += 1) {
     timelineData.forEach(function(item, index) {
@@ -1670,7 +1678,9 @@ function finishUpperCardMove(currentTime) {
   document.querySelectorAll(".year-node").forEach(function(node) {
     node.classList.toggle("active", Number(node.dataset.index) === activeIndex);
   });
-  updateDriveStage(timelineData[activeIndex]);
+  updateDriveStage(
+      excelTimelineData[activeIndex]
+  );
   runRav4Once();
 
   const isLoopReset =
@@ -1920,7 +1930,10 @@ function getRunnerCarConfigByYear(year) {
 
 function getCurrentRunnerCarConfig() {
   const item = getCurrentItem();
-  const year = item ? item.year : timelineData[0].year;
+  const year = 
+      item 
+      ? item.year 
+      : timelineData[0].year;
   return getRunnerCarConfigByYear(year);
 }
 
@@ -2099,7 +2112,7 @@ window.addEventListener("resize", function() {
 
 // 左上の余分なTOYOTA文字を出さないため、JSでロゴを追加しません。
 // restoreToyotaMark();
-buildTimeline();
+//buildTimeline();
 
 const INITIAL_1966_HOLD_MS = 30000;
 let initial1966Locked = false;
@@ -2669,3 +2682,131 @@ window.addEventListener("keydown", function(event) {
     runOpening
   );
 })();
+console.log("XLSX確認");
+console.log(XLSX);
+async function testExcelRead() {
+
+    const response =
+        await fetch("timeline.xlsx");
+
+    const buffer =
+        await response.arrayBuffer();
+
+    const workbook =
+        XLSX.read(buffer, {
+            type: "array"
+        });
+    const sheet =
+    workbook.Sheets["年表マスター"];
+
+    const carSheet =
+        workbook.Sheets["CAR"];
+    
+   
+const carRows =
+    XLSX.utils.sheet_to_json(
+        carSheet,
+        {
+            range: 1
+        }
+    );
+const rows =
+    XLSX.utils.sheet_to_json(
+        sheet,
+        {
+            range: 1
+        }
+    );
+
+console.log("CARシート");
+console.log(carRows);
+
+console.log("CAR先頭");
+console.log(carRows[0]);
+
+
+
+
+
+
+
+    
+    console.log("年表マスター");
+
+    console.log(rows);
+
+    console.log("先頭データ");
+    
+    console.log(rows[0]);
+
+    console.log("タイトル");
+    
+    console.log(rows[0].TITLE);
+   
+    console.log("年");
+    console.log(rows[0].YEAR);
+
+    console.log("画像");
+    console.log(rows[0].MAIN_IMAGE);
+
+    excelTimelineData = rows.map(row => ({
+
+    year: String(row.YEAR),
+
+    
+    era: getEra(row.YEAR),
+  
+
+    title: row.TITLE,
+
+    visual: row.VISUAL,
+
+    image: row.MAIN_IMAGE,
+
+    spec1: row.SPEC1,
+
+    spec2: row.SPEC2,
+
+    spec3: row.SPEC3
+
+}));
+
+    console.log("変換後");
+    console.log(excelTimelineData);
+
+    console.log("旧データ");
+    console.log(timelineData[0]);
+
+    console.log("新データ");
+    console.log(excelTimelineData[0]);
+
+    console.log("Excel変換件数");
+    console.log(excelTimelineData.length);
+
+    if (excelTimelineData.length > 0) {
+
+    buildTimeline();
+
+    }
+    function getEra(year){
+
+    year = Number(year);
+
+    if(year >= 2019){
+        return year === 2019
+            ? "令和元年"
+            : `令和${year-2018}年`;
+    }
+
+    if(year >= 1989){
+        return year === 1989
+            ? "平成元年"
+            : `平成${year-1988}年`;
+    }
+
+    return `昭和${year-1925}年`;
+}
+
+}
+
+testExcelRead();
