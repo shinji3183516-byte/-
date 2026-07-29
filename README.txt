@@ -1,18 +1,15 @@
-高岡工場60周年デジタル年表 オープニング追加版
+高岡工場60周年デジタル年表 推奨構成
 
 配置:
-- index.html
-- style.css
-- script.js
-- images/opening/top-page.jpg  ← 既に準備済みの画像
+index.html
+script.js
+timeline.xlsx
+css/base.css
+css/theme-toyota.css
+css/theme-anime.css
+css/theme-colorful.css
+css/theme-healing.css
+css/theme-monotone.css
 
-上記3ファイルを既存プロジェクトの同名ファイルと入れ替えてください。
-imagesフォルダは既存のものをそのまま使用します。
-
-動作:
-1. 起動時は年表本編を一時停止
-2. トップ画像を大型モニターいっぱいに表示
-3. 「年表をはじめる」を押す
-4. メーターと針が0%から100%まで動作
-5. オープニングがフェードアウト
-6. 年表本編を再開
+画像・動画・libraryフォルダは従来のものを同じ階層へ配置してください。
+動作確認はVS Code Live ServerなどHTTPサーバーで実施してください。index.htmlを直接ダブルクリックするとExcel fetchが失敗します。

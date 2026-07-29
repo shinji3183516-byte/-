@@ -31,8 +31,33 @@ const MAX_IMAGES_PER_SECTION = 3;
 const LOOP_COUNT = 3;
 const STORAGE_KEY = "takaokaTimelineLocalAdditions_v2";
 
+const THEME_STORAGE_KEY = "takaokaTimelineTheme_v1";
+const AVAILABLE_THEMES = new Set(["toyota", "anime", "colorful", "healing", "monotone"]);
+
+function applyTheme(themeName, persist = true) {
+  const safeTheme = AVAILABLE_THEMES.has(themeName) ? themeName : "toyota";
+  const stylesheet = document.getElementById("themeStylesheet");
+  if (stylesheet) stylesheet.href = `css/theme-${safeTheme}.css?v=1`;
+  document.documentElement.dataset.theme = safeTheme;
+  document.querySelectorAll("[data-theme]").forEach((button) => {
+    const active = button.dataset.theme === safeTheme;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  if (persist) localStorage.setItem(THEME_STORAGE_KEY, safeTheme);
+}
+
+function initializeThemeSelector() {
+  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || "toyota";
+  applyTheme(savedTheme, false);
+  document.querySelectorAll("[data-theme]").forEach((button) => {
+    button.addEventListener("click", () => applyTheme(button.dataset.theme));
+  });
+}
+
+
 // RUN-CAR 年代別背景
-const eraBackgrounds = {
+let eraBackgrounds = {
   1960: "images/run-bg/run-bg-1960.jpg",
   1970: "images/run-bg/run-bg-1970.jpg",
   1980: "images/run-bg/run-bg-1980.jpg",
@@ -56,7 +81,7 @@ let activeDriveBackgroundLayer = 0;
 // stopOffset: 中央線停止位置の横補正。通常は "0px"。車画像の透明余白がある場合だけ調整します。
 //            %の数字を大きくするとライトが下がり、小さくすると上がります。
 //            Levinは画像の形状が他車と違うため、専用に大きめの値にしています。
-const ERA_RUNNER_CARS = [
+let ERA_RUNNER_CARS = [
   {
     from: 1960,
     to: 1969,
@@ -135,7 +160,7 @@ const ERA_RUNNER_CARS = [
 
 const TOYOTA_MARK_IMAGE = "images/toyotamark.jpg";
 
-const timelineData = [
+let timelineData = [
   {
     "year": "1966",
     "era": "昭和41年",
@@ -2594,7 +2619,7 @@ window.addEventListener("keydown", function(event) {
        * ボタンを隠して動画全体を見せます。
        */
       
-        startButton.style.display = "non*";
+        startButton.style.display = "none";
       
     } catch (error) {
       openingRunning = false;
@@ -2682,131 +2707,107 @@ window.addEventListener("keydown", function(event) {
     runOpening
   );
 })();
-console.log("XLSX確認");
-console.log(XLSX);
-async function testExcelRead() {
+function getEra(year) {
+  year = Number(year);
+  if (year >= 2019) return year === 2019 ? "令和元年" : `令和${year - 2018}年`;
+  if (year >= 1989) return year === 1989 ? "平成元年" : `平成${year - 1988}年`;
+  return `昭和${year - 1925}年`;
+}
 
-    const response =
-        await fetch("timeline.xlsx");
+function sheetRows(workbook, name) {
+  const sheet = workbook.Sheets[name];
+  if (!sheet) throw new Error(`Excelシート「${name}」が見つかりません。`);
+  return XLSX.utils.sheet_to_json(sheet, { range: 1, defval: "" });
+}
 
-    const buffer =
-        await response.arrayBuffer();
+function makeSectionMap(rows) {
+  const map = new Map();
+  rows.forEach((row) => {
+    const blocks = [];
+    if (row["名称"]) blocks.push({ type: "text", text: String(row["名称"]) });
+    if (row["説明文"]) blocks.push({ type: "text", text: String(row["説明文"]) });
+    ["画像1", "画像2", "画像3"].forEach((key) => {
+      if (row[key]) blocks.push({ type: "image", src: String(row[key]), alt: String(row["名称"] || "年表画像") });
+    });
+    map.set(String(row.ID), blocks);
+  });
+  return map;
+}
 
-    const workbook =
-        XLSX.read(buffer, {
-            type: "array"
-        });
-    const sheet =
-    workbook.Sheets["年表マスター"];
+async function loadExcelTimeline() {
+  try {
+    if (typeof XLSX === "undefined") throw new Error("XLSXライブラリを読み込めませんでした。");
+    const response = await fetch("timeline.xlsx", { cache: "no-store" });
+    if (!response.ok) throw new Error(`timeline.xlsx取得失敗（HTTP ${response.status}）`);
+    const workbook = XLSX.read(await response.arrayBuffer(), { type: "array" });
 
-    const carSheet =
-        workbook.Sheets["CAR"];
-    
-   
-const carRows =
-    XLSX.utils.sheet_to_json(
-        carSheet,
-        {
-            range: 1
-        }
-    );
-const rows =
-    XLSX.utils.sheet_to_json(
-        sheet,
-        {
-            range: 1
-        }
-    );
+    const masterRows = sheetRows(workbook, "年表マスター");
+    const carMap = makeSectionMap(sheetRows(workbook, "CAR"));
+    const plantMap = makeSectionMap(sheetRows(workbook, "PLANT"));
+    const societyMap = makeSectionMap(sheetRows(workbook, "SOCIETY"));
 
-console.log("CARシート");
-console.log(carRows);
+    excelTimelineData = masterRows
+      .filter((row) => Number(row.DISPLAY) !== 0 && row.YEAR)
+      .map((row) => {
+        const id = String(row.ID);
+        return {
+          id,
+          year: String(row.YEAR),
+          era: getEra(row.YEAR),
+          title: String(row.TITLE || ""),
+          visual: String(row.VISUAL || ""),
+          image: String(row.MAIN_IMAGE || ""),
+          spec1: String(row.SPEC1 || ""),
+          spec2: String(row.SPEC2 || ""),
+          spec3: String(row.SPEC3 || ""),
+          movieTitle: String(row.MOVIE_TITLE || ""),
+          movieFile: String(row.MOVIE_FILE || ""),
+          content: {
+            car: carMap.get(id) || [],
+            plant: plantMap.get(id) || [],
+            society: societyMap.get(id) || []
+          }
+        };
+      });
 
-console.log("CAR先頭");
-console.log(carRows[0]);
+    const runnerRows = sheetRows(workbook, "RUN-CAR設定");
+    if (runnerRows.length) {
+      ERA_RUNNER_CARS = runnerRows.map((row, index) => {
+        const fallback = ERA_RUNNER_CARS[index] || ERA_RUNNER_CARS[ERA_RUNNER_CARS.length - 1];
+        return {
+          ...fallback,
+          from: Number(row["年代開始"]),
+          to: Number(row["年代終了"]),
+          alt: String(row["表示名"] || fallback.alt || "走行車両"),
+          src: String(row["車画像"] || fallback.src || "")
+        };
+      });
+    }
 
+    const backgroundRows = sheetRows(workbook, "RUN-CAR背景設定");
+    if (backgroundRows.length) {
+      eraBackgrounds = {};
+      backgroundRows.forEach((row) => {
+        if (row["年代開始"] && row["背景画像"]) eraBackgrounds[Number(row["年代開始"])] = String(row["背景画像"]);
+      });
+    }
 
-
-
-
-
-
-    
-    console.log("年表マスター");
-
-    console.log(rows);
-
-    console.log("先頭データ");
-    
-    console.log(rows[0]);
-
-    console.log("タイトル");
-    
-    console.log(rows[0].TITLE);
-   
-    console.log("年");
-    console.log(rows[0].YEAR);
-
-    console.log("画像");
-    console.log(rows[0].MAIN_IMAGE);
-
-    excelTimelineData = rows.map(row => ({
-
-    year: String(row.YEAR),
-
-    
-    era: getEra(row.YEAR),
-  
-
-    title: row.TITLE,
-
-    visual: row.VISUAL,
-
-    image: row.MAIN_IMAGE,
-
-    spec1: row.SPEC1,
-
-    spec2: row.SPEC2,
-
-    spec3: row.SPEC3
-
-}));
-
-    console.log("変換後");
-    console.log(excelTimelineData);
-
-    console.log("旧データ");
-    console.log(timelineData[0]);
-
-    console.log("新データ");
-    console.log(excelTimelineData[0]);
-
-    console.log("Excel変換件数");
-    console.log(excelTimelineData.length);
-
-    if (excelTimelineData.length > 0) {
-
+    if (!excelTimelineData.length) throw new Error("表示対象の年表データがありません。DISPLAY列を確認してください。");
+    timelineData = excelTimelineData;
+    activeIndex = 0;
     buildTimeline();
-
-    }
-    function getEra(year){
-
-    year = Number(year);
-
-    if(year >= 2019){
-        return year === 2019
-            ? "令和元年"
-            : `令和${year-2018}年`;
-    }
-
-    if(year >= 1989){
-        return year === 1989
-            ? "平成元年"
-            : `平成${year-1988}年`;
-    }
-
-    return `昭和${year-1925}年`;
+    console.info(`Excel年表を${timelineData.length}件読み込みました。`);
+  } catch (error) {
+    console.error("年表データ読込エラー:", error);
+    const message = document.createElement("div");
+    message.className = "timeline-load-error";
+    message.textContent = `年表データを読み込めませんでした: ${error.message}`;
+    document.body.appendChild(message);
+    excelTimelineData = timelineData;
+    buildTimeline();
+  }
 }
 
-}
+initializeThemeSelector();
+loadExcelTimeline();
 
-testExcelRead();
