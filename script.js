@@ -2523,7 +2523,6 @@ window.addEventListener("keydown", function(event) {
   }
 
   if (controls) {
-    controls.style.position = "relative";
     controls.style.zIndex = "2";
   }
 
