@@ -32,23 +32,37 @@ const LOOP_COUNT = 3;
 const STORAGE_KEY = "takaokaTimelineLocalAdditions_v2";
 
 const THEME_STORAGE_KEY = "takaokaTimelineTheme_v1";
-const AVAILABLE_THEMES = new Set(["toyota", "anime", "colorful", "healing", "monotone"]);
+const AVAILABLE_THEMES = new Set(["toyota", "blueprint", "anime", "colorful", "healing", "monotone"]);
 
 function applyTheme(themeName, persist = true) {
   const safeTheme = AVAILABLE_THEMES.has(themeName) ? themeName : "toyota";
   const stylesheet = document.getElementById("themeStylesheet");
-  if (stylesheet) stylesheet.href = `css/theme-${safeTheme}.css?v=1`;
+  if (stylesheet) stylesheet.href = `css/theme-${safeTheme}.css?v=blueprint-v2-2`;
   document.documentElement.dataset.theme = safeTheme;
   document.querySelectorAll("[data-theme]").forEach((button) => {
     const active = button.dataset.theme === safeTheme;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
   });
-  if (persist) localStorage.setItem(THEME_STORAGE_KEY, safeTheme);
+  if (persist) {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, safeTheme);
+    } catch (_) {}
+  }
 }
 
 function initializeThemeSelector() {
-  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || "toyota";
+
+  let savedTheme = "toyota";
+  try {
+    savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || "toyota";
+  } catch (_) {}
+  if (!AVAILABLE_THEMES.has(savedTheme)) {
+    savedTheme = "toyota";
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, "toyota");
+    } catch (_) {}
+  }
   applyTheme(savedTheme, false);
   document.querySelectorAll("[data-theme]").forEach((button) => {
     button.addEventListener("click", () => applyTheme(button.dataset.theme));
@@ -1478,7 +1492,8 @@ timelineTrack.innerHTML = "";
     });
   }
 
-  showData(0, true);
+  // Excel読込後にDOMを作り直した場合も、必ず1966年へ再同期します。
+  lockInitialCardToCenter(true);
 }
 
 function centerElement(element, direction) {
@@ -2142,7 +2157,7 @@ window.addEventListener("resize", function() {
 const INITIAL_1966_HOLD_MS = 30000;
 let initial1966Locked = false;
 
-function lockInitialCardToCenter() {
+function lockInitialCardToCenter(restartHold = false) {
   // 起動時の状態を完全にリセットし、1966年を基準位置へ固定します。
   upperCardMove.running = false;
   upperCardMove.armed = false;
@@ -2160,7 +2175,7 @@ function lockInitialCardToCenter() {
   // 初期配置が終わるまで年表を非表示にし、位置飛びを見せません。
   timelineTrack.style.visibility = "visible";
 
-  if (!initial1966Locked) {
+  if (restartHold || !initial1966Locked) {
     centerHoldUntil = performance.now() + INITIAL_1966_HOLD_MS;
     initial1966Locked = true;
   }
@@ -2583,6 +2598,8 @@ window.addEventListener("keydown", function(event) {
     openingPage.classList.add("is-finished");
     document.body.classList.remove("opening-active");
 
+    // オープニング終了時点を本当の起点にし、上下を1966年で完全同期してから再生します。
+    lockInitialCardToCenter(true);
     startTimelineAfterOpening();
 
     window.setTimeout(() => {
@@ -2733,7 +2750,22 @@ function makeSectionMap(rows) {
   return map;
 }
 
+function canLoadExcelFromCurrentLocation() {
+  return location.protocol === "http:" || location.protocol === "https:";
+}
+
 async function loadExcelTimeline() {
+  // Finderからindex.htmlを直接開いた場合（file://）は、
+  // ブラウザのCORS制限によりfetchでExcelを読めません。
+  // その場合は自動的にscript.js内の標準データを使用します。
+  if (!canLoadExcelFromCurrentLocation()) {
+    excelTimelineData = timelineData;
+    activeIndex = 0;
+    buildTimeline();
+    console.info("ローカル直接起動のため、内蔵年表データで表示しています。");
+    return;
+  }
+
   try {
     if (typeof XLSX === "undefined") throw new Error("XLSXライブラリを読み込めませんでした。");
     const response = await fetch("timeline.xlsx", { cache: "no-store" });
@@ -2797,12 +2829,10 @@ async function loadExcelTimeline() {
     buildTimeline();
     console.info(`Excel年表を${timelineData.length}件読み込みました。`);
   } catch (error) {
-    console.error("年表データ読込エラー:", error);
-    const message = document.createElement("div");
-    message.className = "timeline-load-error";
-    message.textContent = `年表データを読み込めませんでした: ${error.message}`;
-    document.body.appendChild(message);
+    // Excelに問題があっても展示を停止させず、内蔵データへ自動退避します。
+    console.warn("Excel年表を読み込めなかったため、内蔵データへ切り替えました。", error);
     excelTimelineData = timelineData;
+    activeIndex = 0;
     buildTimeline();
   }
 }
