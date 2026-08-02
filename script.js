@@ -2932,12 +2932,18 @@ function setOfflineExcelStatus(message, isError = false) {
   status.classList.toggle("is-error", isError);
 }
 
+function hideOfflineExcelPanel() {
+  const panel = document.querySelector(".offline-excel-panel");
+  if (panel) panel.style.display = "none";
+}
+
 async function loadWorkbookFromFile(file) {
   try {
     if (typeof XLSX === "undefined") throw new Error("XLSXライブラリを読み込めませんでした。");
     const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
     applyExcelWorkbook(workbook);
     setOfflineExcelStatus(`${file.name} を読み込みました`);
+    hideOfflineExcelPanel();
     console.info(`オフラインExcel「${file.name}」を読み込みました。`);
   } catch (error) {
     console.error(error);
@@ -2977,6 +2983,7 @@ async function loadExcelTimeline() {
     const workbook = XLSX.read(await response.arrayBuffer(), { type: "array" });
     applyExcelWorkbook(workbook);
     setOfflineExcelStatus("timeline.xlsx を自動読み込みしました");
+    hideOfflineExcelPanel();
     console.info(`Excel年表を${timelineData.length}件読み込みました。`);
   } catch (error) {
     console.warn("Excel年表を読み込めなかったため、内蔵データへ切り替えました。", error);
