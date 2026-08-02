@@ -4051,132 +4051,200 @@ body.opening-active {
 }
 
 
-/* ===== トップページ：右下テーマ選択 ===== */
+/* ===== トップページ：テーマ選択 ===== */
+.opening-theme-picker{width:min(92vw,760px);padding:14px 16px;border:1px solid rgba(255,255,255,.28);border-radius:18px;background:rgba(0,0,0,.34);backdrop-filter:blur(10px);}
+.opening-theme-picker__title{margin:0 0 10px;color:#fff;font-size:14px;font-weight:700;letter-spacing:.12em;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.55);}
+.opening-theme-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;}
+.theme-select-button{min-height:42px;padding:8px;border:1px solid rgba(255,255,255,.36);border-radius:999px;color:#fff;background:rgba(10,10,10,.56);font-weight:700;cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;}
+.theme-select-button:hover{transform:translateY(-2px);}
+.theme-select-button.is-active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.24),0 0 22px rgba(255,255,255,.28);}
+.theme-select-button:focus-visible{outline:3px solid rgba(255,255,255,.82);outline-offset:3px;}
+@media(max-width:700px){.opening-theme-options{grid-template-columns:repeat(2,minmax(0,1fr));}.theme-select-button:last-child{grid-column:1/-1;}}
+
+
+/* ===== Excel編集・オフライン確認対応 ===== */
+:root{
+  --excel-content-font-size:22px;
+  --excel-title-font-size:34px;
+  --excel-year-font-size:64px;
+  --excel-caption-font-size:18px;
+}
+.content-text{font-size:var(--excel-content-font-size) !important;line-height:1.5;}
+#selectedTitle{font-size:var(--excel-title-font-size) !important;}
+#selectedYear{font-size:var(--excel-year-font-size) !important;}
+.image-block figcaption{font-size:var(--excel-caption-font-size) !important;}
+.offline-excel-panel{position:fixed;right:14px;bottom:14px;z-index:99999;display:flex;align-items:center;gap:10px;max-width:min(640px,calc(100vw - 28px));padding:10px 12px;border:1px solid rgba(255,255,255,.35);border-radius:12px;background:rgba(0,0,0,.84);box-shadow:0 8px 24px rgba(0,0,0,.4);color:#fff;font-family:Meiryo,sans-serif;font-size:14px;}
+.offline-excel-panel button{padding:8px 14px;border:0;border-radius:8px;background:#f5b74d;color:#111;font-weight:700;cursor:pointer;white-space:nowrap;}
+.offline-excel-panel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.offline-excel-panel .is-error{color:#ff9d9d;}
+@media (max-width:700px){.offline-excel-panel{left:8px;right:8px;bottom:8px;font-size:12px;}}
+/* トップ画面：デザイン選択を右下へ固定 */
 .opening-theme-picker {
   position: absolute;
-  right: clamp(22px, 3vw, 64px);
-  bottom: clamp(74px, 9vh, 132px);
-  z-index: 4;
-  width: clamp(190px, 13vw, 250px);
-  padding: 16px 16px 18px;
-  border: 1px solid rgba(255, 255, 255, .34);
-  border-radius: 18px;
-  background: linear-gradient(145deg, rgba(2, 12, 24, .72), rgba(7, 24, 40, .48));
-  box-shadow: 0 14px 38px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .12);
-  backdrop-filter: blur(11px) saturate(118%);
-  -webkit-backdrop-filter: blur(11px) saturate(118%);
+  right: clamp(20px, 3vw, 60px);
+  bottom: clamp(20px, 3vh, 50px);
+  left: auto;
+  top: auto;
+  z-index: 20;
+  margin: 0;
 }
-
-.opening-theme-picker__title {
-  margin: 0 0 12px;
-  color: #fff;
-  font-size: clamp(13px, .82vw, 16px);
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-align: left;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, .62);
+/* トップ画面：デザイン選択を画面右下へ固定 */
+#openingPage > .opening-theme-picker {
+  position:absolute !important;
+  right:clamp(24px, 3vw, 56px) !important;
+  bottom:clamp(92px, 11vh, 126px) !important;
+  left:auto !important;
+  top:auto !important;
+  width:min(48vw, 760px) !important;
+  max-width:calc(100vw - 48px) !important;
+  margin:0 !important;
+  transform:none !important;
+  z-index:50 !important;
 }
-
-.opening-theme-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.theme-select-button {
-  position: relative;
-  display: flex;
-  min-height: 40px;
-  align-items: center;
-  width: 100%;
-  padding: 8px 12px 8px 38px;
-  border: 1px solid rgba(255, 255, 255, .30);
-  border-radius: 10px;
-  color: rgba(255, 255, 255, .94);
-  background: rgba(5, 15, 27, .52);
-  font: inherit;
-  font-size: clamp(12px, .78vw, 15px);
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-align: left;
-  cursor: pointer;
-  transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
-}
-
-.theme-select-button::before {
-  content: "";
-  position: absolute;
-  left: 13px;
-  top: 50%;
-  width: 13px;
-  height: 13px;
-  transform: translateY(-50%);
-  border: 1.5px solid rgba(255, 255, 255, .82);
-  border-radius: 3px;
-  background: rgba(255, 255, 255, .04);
-  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .18);
-}
-
-.theme-select-button:hover {
-  transform: translateX(-3px);
-  border-color: rgba(255, 255, 255, .62);
-  background: rgba(15, 35, 54, .70);
-}
-
-.theme-select-button.is-active {
-  border-color: rgba(255, 255, 255, .90);
-  background: linear-gradient(90deg, rgba(111, 67, 18, .70), rgba(9, 48, 75, .80));
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, .14), 0 0 22px rgba(77, 212, 255, .18);
-}
-
-.theme-select-button.is-active::before {
-  background: #fff;
-  box-shadow: inset 0 0 0 3px rgba(16, 48, 72, .82), 0 0 9px rgba(255, 255, 255, .72);
-}
-
-.theme-select-button:focus-visible {
-  outline: 3px solid rgba(255, 255, 255, .88);
-  outline-offset: 3px;
-}
-
-@media (max-height: 780px) {
-  .opening-theme-picker {
-    bottom: 22px;
-    transform: scale(.84);
-    transform-origin: right bottom;
+@media (max-width:900px){
+  #openingPage > .opening-theme-picker{
+    right:16px !important;
+    bottom:92px !important;
+    width:min(720px, calc(100vw - 32px)) !important;
   }
 }
 
-@media (max-width: 900px) {
-  .opening-theme-picker {
-    right: 14px;
-    bottom: 18px;
-    width: min(42vw, 230px);
-    padding: 12px;
-  }
+/* ===== トップ画面：デザイン選択を以前の縦配列へ戻す ===== */
+#openingPage > .opening-theme-picker {
+  right: 28px !important;
+  bottom: 92px !important;
+  width: 190px !important;
+  max-width: calc(100vw - 56px) !important;
+  padding: 12px !important;
+}
 
-  .theme-select-button {
-    min-height: 36px;
-    padding-left: 34px;
+#openingPage > .opening-theme-picker .opening-theme-picker__title {
+  margin: 0 0 8px !important;
+  text-align: center !important;
+}
+
+#openingPage > .opening-theme-picker .opening-theme-options {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 7px !important;
+}
+
+#openingPage > .opening-theme-picker .theme-select-button,
+#openingPage > .opening-theme-picker .theme-select-button:last-child {
+  width: 100% !important;
+  min-height: 38px !important;
+  grid-column: auto !important;
+}
+
+@media (max-width: 700px) {
+  #openingPage > .opening-theme-picker {
+    right: 12px !important;
+    bottom: 84px !important;
+    width: 170px !important;
   }
 }
 
-@media (max-width: 620px) {
-  .opening-theme-picker {
-    left: 50%;
-    right: auto;
-    bottom: 12px;
-    width: min(92vw, 500px);
-    transform: translateX(-50%);
-  }
 
-  .opening-theme-options {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+/* ===== 最終配置：トップ画面のテーマ選択は右端中央・縦型 ===== */
+#openingPage > .opening-theme-picker{
+  top:50% !important;
+  right:clamp(14px,1.6vw,28px) !important;
+  bottom:auto !important;
+  left:auto !important;
+  width:clamp(132px,10vw,158px) !important;
+  transform:translateY(-42%) !important;
+}
+#openingPage > .opening-theme-picker .opening-theme-options{
+  display:flex !important;
+  flex-direction:column !important;
+  grid-template-columns:none !important;
+  gap:6px !important;
+}
 
-  .theme-select-button:last-child {
-    grid-column: 1 / -1;
+/* ===== 最終配置：デザイン選択を右端の下段へ配置 ===== */
+#openingPage > .opening-theme-picker{
+  position:absolute !important;
+  top:auto !important;
+  right:clamp(10px,1.2vw,20px) !important;
+  bottom:clamp(96px,10vh,118px) !important;
+  left:auto !important;
+  width:clamp(132px,9.5vw,150px) !important;
+  max-width:150px !important;
+  padding:9px !important;
+  margin:0 !important;
+  transform:none !important;
+  z-index:60 !important;
+  border-radius:14px !important;
+  background:rgba(0,0,0,.42) !important;
+  backdrop-filter:blur(7px) !important;
+}
+
+#openingPage > .opening-theme-picker .opening-theme-picker__title{
+  margin:0 0 6px !important;
+  font-size:11px !important;
+  letter-spacing:.06em !important;
+  white-space:nowrap !important;
+}
+
+#openingPage > .opening-theme-picker .opening-theme-options{
+  display:flex !important;
+  flex-direction:column !important;
+  grid-template-columns:none !important;
+  gap:5px !important;
+}
+
+#openingPage > .opening-theme-picker .theme-select-button,
+#openingPage > .opening-theme-picker .theme-select-button:last-child{
+  width:100% !important;
+  min-height:30px !important;
+  height:30px !important;
+  padding:3px 7px !important;
+  font-size:12px !important;
+  line-height:1 !important;
+  grid-column:auto !important;
+}
+
+@media (max-width:900px){
+  #openingPage > .opening-theme-picker{
+    right:8px !important;
+    bottom:86px !important;
+    width:128px !important;
+    max-width:128px !important;
   }
 }
 
+
+/* =========================================================
+   FINAL OVERRIDE: オープニングのデザイン選択
+   以前の右下・縦型パネル位置へ戻す
+   ========================================================= */
+#openingPage > .opening-theme-picker{
+  position:absolute !important;
+  right:clamp(18px,2vw,36px) !important;
+  bottom:clamp(58px,7vh,86px) !important;
+  left:auto !important;
+  top:auto !important;
+  width:clamp(176px,12.5vw,210px) !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:14px 12px 12px !important;
+  transform:none !important;
+  translate:none !important;
+  z-index:120 !important;
+}
+#openingPage > .opening-theme-picker .opening-theme-options{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  grid-auto-flow:row !important;
+  gap:7px !important;
+  width:100% !important;
+}
+#openingPage > .opening-theme-picker .theme-select-button,
+#openingPage > .opening-theme-picker .theme-select-button:last-child{
+  grid-column:auto !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:40px !important;
+  padding:7px 10px !important;
+  text-align:left !important;
+}

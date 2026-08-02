@@ -32,7 +32,7 @@ const LOOP_COUNT = 3;
 const STORAGE_KEY = "takaokaTimelineLocalAdditions_v2";
 
 const THEME_STORAGE_KEY = "takaokaTimelineTheme_v1";
-const AVAILABLE_THEMES = new Set(["toyota", "blueprint", "anime", "colorful", "healing", "monotone"]);
+const AVAILABLE_THEMES = new Set(["toyota", "blueprint", "anime", "colorful", "healing", "monotone","country",]);
 
 function applyTheme(themeName, persist = true) {
   const safeTheme = AVAILABLE_THEMES.has(themeName) ? themeName : "toyota";
@@ -2754,86 +2754,147 @@ function canLoadExcelFromCurrentLocation() {
   return location.protocol === "http:" || location.protocol === "https:";
 }
 
+function readDisplaySettings(workbook) {
+  const sheet = workbook.Sheets["デザイン設定"];
+  if (!sheet) return;
+  const rows = XLSX.utils.sheet_to_json(sheet, { range: 9, defval: "" });
+  const settings = new Map(rows.map((row) => [String(row["設定名"] || "").trim(), Number(row["値"])]));
+  const setPx = (name, cssVar, min, max) => {
+    const value = settings.get(name);
+    if (Number.isFinite(value)) {
+      document.documentElement.style.setProperty(cssVar, `${Math.min(max, Math.max(min, value))}px`);
+    }
+  };
+  setPx("本文フォントサイズ", "--excel-content-font-size", 18, 32);
+  setPx("選択年タイトルサイズ", "--excel-title-font-size", 28, 52);
+  setPx("年表示サイズ", "--excel-year-font-size", 48, 90);
+  setPx("写真説明サイズ", "--excel-caption-font-size", 14, 28);
+}
+
+function applyExcelWorkbook(workbook) {
+  const masterRows = sheetRows(workbook, "年表マスター");
+  const carMap = makeSectionMap(sheetRows(workbook, "CAR"));
+  const plantMap = makeSectionMap(sheetRows(workbook, "PLANT"));
+  const societyMap = makeSectionMap(sheetRows(workbook, "SOCIETY"));
+
+  const loadedTimelineData = masterRows
+    .filter((row) => Number(row.DISPLAY) !== 0 && row.YEAR)
+    .map((row) => {
+      const id = String(row.ID);
+      return {
+        id,
+        year: String(row.YEAR),
+        era: getEra(row.YEAR),
+        title: String(row.TITLE || ""),
+        visual: String(row.VISUAL || ""),
+        image: String(row.MAIN_IMAGE || ""),
+        spec1: String(row.SPEC1 || ""),
+        spec2: String(row.SPEC2 || ""),
+        spec3: String(row.SPEC3 || ""),
+        movieTitle: String(row.MOVIE_TITLE || ""),
+        movieFile: String(row.MOVIE_FILE || ""),
+        content: {
+          car: carMap.get(id) || [],
+          plant: plantMap.get(id) || [],
+          society: societyMap.get(id) || []
+        }
+      };
+    });
+
+  if (!loadedTimelineData.length) {
+    throw new Error("表示対象の年表データがありません。DISPLAY列を確認してください。");
+  }
+
+  const runnerRows = sheetRows(workbook, "RUN-CAR設定");
+  if (runnerRows.length) {
+    ERA_RUNNER_CARS = runnerRows.map((row, index) => {
+      const fallback = ERA_RUNNER_CARS[index] || ERA_RUNNER_CARS[ERA_RUNNER_CARS.length - 1];
+      return {
+        ...fallback,
+        from: Number(row["年代開始"]),
+        to: Number(row["年代終了"]),
+        alt: String(row["表示名"] || fallback.alt || "走行車両"),
+        src: String(row["車画像"] || fallback.src || "")
+      };
+    });
+  }
+
+  const backgroundRows = sheetRows(workbook, "RUN-CAR背景設定");
+  if (backgroundRows.length) {
+    eraBackgrounds = {};
+    backgroundRows.forEach((row) => {
+      if (row["年代開始"] && row["背景画像"]) {
+        eraBackgrounds[Number(row["年代開始"])] = String(row["背景画像"]);
+      }
+    });
+  }
+
+  readDisplaySettings(workbook);
+  excelTimelineData = loadedTimelineData;
+  timelineData = loadedTimelineData;
+  activeIndex = 0;
+  buildTimeline();
+}
+
+function setOfflineExcelStatus(message, isError = false) {
+  const status = document.getElementById("offlineExcelStatus");
+  if (!status) return;
+  status.textContent = message;
+  status.classList.toggle("is-error", isError);
+}
+
+async function loadWorkbookFromFile(file) {
+  try {
+    if (typeof XLSX === "undefined") throw new Error("XLSXライブラリを読み込めませんでした。");
+    const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+    applyExcelWorkbook(workbook);
+    setOfflineExcelStatus(`${file.name} を読み込みました`);
+    console.info(`オフラインExcel「${file.name}」を読み込みました。`);
+  } catch (error) {
+    console.error(error);
+    setOfflineExcelStatus(`読込エラー: ${error.message}`, true);
+    alert(`Excelを読み込めませんでした。\n${error.message}`);
+  }
+}
+
+function initializeOfflineExcelPicker() {
+  const input = document.getElementById("offlineExcelInput");
+  const button = document.getElementById("offlineExcelButton");
+  if (!input || !button) return;
+  button.addEventListener("click", () => input.click());
+  input.addEventListener("change", () => {
+    const file = input.files && input.files[0];
+    if (file) loadWorkbookFromFile(file);
+    input.value = "";
+  });
+}
+
 async function loadExcelTimeline() {
-  // Finderからindex.htmlを直接開いた場合（file://）は、
-  // ブラウザのCORS制限によりfetchでExcelを読めません。
-  // その場合は自動的にscript.js内の標準データを使用します。
+  initializeOfflineExcelPicker();
+
   if (!canLoadExcelFromCurrentLocation()) {
     excelTimelineData = timelineData;
     activeIndex = 0;
     buildTimeline();
-    console.info("ローカル直接起動のため、内蔵年表データで表示しています。");
+    setOfflineExcelStatus("オフライン起動中：［Excelを読み込む］から timeline.xlsx を選択してください");
+    console.info("ローカル直接起動です。Excel選択後に編集内容を反映します。");
     return;
   }
 
   try {
     if (typeof XLSX === "undefined") throw new Error("XLSXライブラリを読み込めませんでした。");
-    const response = await fetch("timeline.xlsx", { cache: "no-store" });
+    const response = await fetch(`timeline.xlsx?reload=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) throw new Error(`timeline.xlsx取得失敗（HTTP ${response.status}）`);
     const workbook = XLSX.read(await response.arrayBuffer(), { type: "array" });
-
-    const masterRows = sheetRows(workbook, "年表マスター");
-    const carMap = makeSectionMap(sheetRows(workbook, "CAR"));
-    const plantMap = makeSectionMap(sheetRows(workbook, "PLANT"));
-    const societyMap = makeSectionMap(sheetRows(workbook, "SOCIETY"));
-
-    excelTimelineData = masterRows
-      .filter((row) => Number(row.DISPLAY) !== 0 && row.YEAR)
-      .map((row) => {
-        const id = String(row.ID);
-        return {
-          id,
-          year: String(row.YEAR),
-          era: getEra(row.YEAR),
-          title: String(row.TITLE || ""),
-          visual: String(row.VISUAL || ""),
-          image: String(row.MAIN_IMAGE || ""),
-          spec1: String(row.SPEC1 || ""),
-          spec2: String(row.SPEC2 || ""),
-          spec3: String(row.SPEC3 || ""),
-          movieTitle: String(row.MOVIE_TITLE || ""),
-          movieFile: String(row.MOVIE_FILE || ""),
-          content: {
-            car: carMap.get(id) || [],
-            plant: plantMap.get(id) || [],
-            society: societyMap.get(id) || []
-          }
-        };
-      });
-
-    const runnerRows = sheetRows(workbook, "RUN-CAR設定");
-    if (runnerRows.length) {
-      ERA_RUNNER_CARS = runnerRows.map((row, index) => {
-        const fallback = ERA_RUNNER_CARS[index] || ERA_RUNNER_CARS[ERA_RUNNER_CARS.length - 1];
-        return {
-          ...fallback,
-          from: Number(row["年代開始"]),
-          to: Number(row["年代終了"]),
-          alt: String(row["表示名"] || fallback.alt || "走行車両"),
-          src: String(row["車画像"] || fallback.src || "")
-        };
-      });
-    }
-
-    const backgroundRows = sheetRows(workbook, "RUN-CAR背景設定");
-    if (backgroundRows.length) {
-      eraBackgrounds = {};
-      backgroundRows.forEach((row) => {
-        if (row["年代開始"] && row["背景画像"]) eraBackgrounds[Number(row["年代開始"])] = String(row["背景画像"]);
-      });
-    }
-
-    if (!excelTimelineData.length) throw new Error("表示対象の年表データがありません。DISPLAY列を確認してください。");
-    timelineData = excelTimelineData;
-    activeIndex = 0;
-    buildTimeline();
+    applyExcelWorkbook(workbook);
+    setOfflineExcelStatus("timeline.xlsx を自動読み込みしました");
     console.info(`Excel年表を${timelineData.length}件読み込みました。`);
   } catch (error) {
-    // Excelに問題があっても展示を停止させず、内蔵データへ自動退避します。
     console.warn("Excel年表を読み込めなかったため、内蔵データへ切り替えました。", error);
     excelTimelineData = timelineData;
     activeIndex = 0;
     buildTimeline();
+    setOfflineExcelStatus("自動読込に失敗しました。Excelを手動選択してください", true);
   }
 }
 
