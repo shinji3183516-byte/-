@@ -2477,6 +2477,93 @@ window.addEventListener("keydown", function(event) {
 /* v9 完全同期：上下は同一開始時刻・同一duration・同一progress。起動時1966位置をSafari向け多段固定。 */
 
 /* =========================================================
+   Excel「設定」シート連動 BGM制御
+   ========================================================= */
+const bgmSettings = {
+  enabled: false,
+  file: "",
+  volume: 0.25,
+  loop: true,
+  fadeInSeconds: 0
+};
+
+function normalizeExcelBoolean(value, fallback = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  const text = String(value ?? "").trim().toUpperCase();
+  if (["TRUE", "1", "YES", "ON", "有効", "はい"].includes(text)) return true;
+  if (["FALSE", "0", "NO", "OFF", "無効", "いいえ"].includes(text)) return false;
+  return fallback;
+}
+
+function readSystemSettings(workbook) {
+  const sheet = workbook.Sheets["設定"];
+  if (!sheet) {
+    console.info('Excelに「設定」シートがないため、BGMは使用しません。');
+    return;
+  }
+  const rows = XLSX.utils.sheet_to_json(sheet, { range: 1, defval: "" });
+  const settings = new Map();
+  rows.forEach((row) => {
+    const key = String(row["設定キー"] || "").trim();
+    if (key) settings.set(key, row["設定値"]);
+  });
+
+  bgmSettings.enabled = normalizeExcelBoolean(settings.get("BGM_USE"), false);
+  bgmSettings.file = String(settings.get("BGM_FILE") || "").trim();
+
+  const volume = Number(settings.get("BGM_VOLUME"));
+  bgmSettings.volume = Number.isFinite(volume) ? Math.min(1, Math.max(0, volume)) : 0.25;
+  bgmSettings.loop = normalizeExcelBoolean(settings.get("BGM_LOOP"), true);
+
+  const fadeIn = Number(settings.get("BGM_FADE_IN"));
+  bgmSettings.fadeInSeconds = Number.isFinite(fadeIn) ? Math.max(0, fadeIn) : 0;
+
+  const bgm = document.getElementById("bgm");
+  if (bgm && bgmSettings.file) {
+    bgm.src = `./audio/${bgmSettings.file}`;
+    bgm.loop = bgmSettings.loop;
+    bgm.preload = "auto";
+  }
+  console.info("ExcelのBGM設定を読み込みました。", { ...bgmSettings });
+}
+
+async function startTimelineBgm() {
+  const bgm = document.getElementById("bgm");
+  if (!bgmSettings.enabled || !bgmSettings.file || !bgm) {
+    console.info("BGMは無効、またはBGMファイルが未設定です。");
+    return;
+  }
+
+  bgm.pause();
+  bgm.currentTime = 0;
+  bgm.src = `./audio/${bgmSettings.file}`;
+  bgm.loop = bgmSettings.loop;
+
+  const targetVolume = bgmSettings.volume;
+  const fadeSeconds = bgmSettings.fadeInSeconds;
+  bgm.volume = fadeSeconds > 0 ? 0 : targetVolume;
+
+  try {
+    await bgm.play();
+  } catch (error) {
+    console.error("BGMの再生に失敗しました。", error);
+    alert(`BGMを再生できませんでした。\naudio/${bgmSettings.file} を確認してください。`);
+    return;
+  }
+
+  if (fadeSeconds <= 0 || targetVolume <= 0) return;
+  const startedAt = performance.now();
+  const fadeDurationMs = fadeSeconds * 1000;
+  function fadeStep(now) {
+    const progress = Math.min(1, (now - startedAt) / fadeDurationMs);
+    bgm.volume = targetVolume * progress;
+    if (progress < 1 && !bgm.paused) requestAnimationFrame(fadeStep);
+  }
+  requestAnimationFrame(fadeStep);
+}
+
+/* =========================================================
    デジタル年表 オープニング制御
    ========================================================= */
  (() => {
@@ -2629,6 +2716,7 @@ window.addEventListener("keydown", function(event) {
       openingMovie.currentTime = 0;
 
       await openingMovie.play();
+      await startTimelineBgm();
 
       /*
        * 再生が成功したら、既存のメーターと
@@ -2830,6 +2918,7 @@ function applyExcelWorkbook(workbook) {
   }
 
   readDisplaySettings(workbook);
+  readSystemSettings(workbook);
   excelTimelineData = loadedTimelineData;
   timelineData = loadedTimelineData;
   activeIndex = 0;

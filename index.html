@@ -11,10 +11,82 @@
   
   <link href="css/base.css?v=1" rel="stylesheet"/>
    <link id="themeStylesheet" href="css/theme-toyota.css?v=1" rel="stylesheet"/>
-  <script defer="" src="script.js?v=blueprint-v2-2">
+  <style id="opening-theme-position-override">
+   /* オープニング画面：デザイン選択を以前の右下・縦型位置へ戻す */
+   #openingPage > .opening-theme-picker {
+     position: absolute !important;
+     right: clamp(18px, 2vw, 36px) !important;
+     bottom: clamp(58px, 7vh, 86px) !important;
+     left: auto !important;
+     top: auto !important;
+     width: clamp(176px, 12.5vw, 210px) !important;
+     max-width: none !important;
+     margin: 0 !important;
+     padding: 14px 12px 12px !important;
+     border: 1px solid rgba(106, 210, 255, .52) !important;
+     border-radius: 20px !important;
+     background: rgba(4, 22, 38, .86) !important;
+     box-shadow: 0 14px 34px rgba(0, 0, 0, .42), inset 0 0 22px rgba(68, 194, 255, .07) !important;
+     backdrop-filter: blur(10px) !important;
+     transform: none !important;
+     translate: none !important;
+     z-index: 120 !important;
+   }
+
+   #openingPage > .opening-theme-picker .opening-theme-picker__title {
+     margin: 0 0 10px !important;
+     text-align: left !important;
+     font-size: clamp(12px, .9vw, 15px) !important;
+     letter-spacing: .08em !important;
+     color: #d9f5ff !important;
+   }
+
+   #openingPage > .opening-theme-picker .opening-theme-options {
+     display: grid !important;
+     grid-template-columns: 1fr !important;
+     grid-auto-flow: row !important;
+     gap: 7px !important;
+     width: 100% !important;
+   }
+
+   #openingPage > .opening-theme-picker .theme-select-button,
+   #openingPage > .opening-theme-picker .theme-select-button:last-child {
+     grid-column: auto !important;
+     width: 100% !important;
+     min-width: 0 !important;
+     min-height: 40px !important;
+     padding: 7px 10px !important;
+     border-radius: 0 !important;
+     text-align: left !important;
+     font-size: clamp(11px, .82vw, 14px) !important;
+     background: rgba(3, 20, 34, .72) !important;
+   }
+
+   @media (max-width: 900px), (max-height: 720px) {
+     #openingPage > .opening-theme-picker {
+       right: 14px !important;
+       bottom: 68px !important;
+       width: 168px !important;
+       padding: 11px 10px !important;
+     }
+     #openingPage > .opening-theme-picker .theme-select-button,
+     #openingPage > .opening-theme-picker .theme-select-button:last-child {
+       min-height: 34px !important;
+       padding: 5px 8px !important;
+     }
+   }
+  </style>
+<script defer="" src="script.js?v=bgm-excel-v1">
   </script>
  </head>
  <body class="opening-active">
+  <audio id="bgm" preload="auto"></audio>
+  <div class="offline-excel-panel" aria-label="オフラインExcel読込">
+    <button id="offlineExcelButton" type="button">Excelを読み込む</button>
+    <input id="offlineExcelInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+    <span id="offlineExcelStatus">Excel読込待ち</span>
+  </div>
+
 
   <!-- ======================================================
        デジタル年表 オープニング
@@ -87,6 +159,7 @@
       </div>
     </div>
 
+
     <button
       id="openingStartButton"
       class="opening-start-button"
@@ -104,17 +177,20 @@
     </p>
   </div>
 
-    <section class="opening-theme-picker" aria-label="デザインテーマ選択">
-      <p class="opening-theme-picker__title">デザインを選択</p>
-      <div class="opening-theme-options">
-        <button class="theme-select-button" type="button" data-theme="toyota">TOYOTA</button>
-        <button class="theme-select-button" type="button" data-theme="blueprint">設計図</button>
-<button class="theme-select-button" type="button" data-theme="anime">アニメ</button>
-        <button class="theme-select-button" type="button" data-theme="colorful">カラフル</button>
-        <button class="theme-select-button" type="button" data-theme="healing">ヒーリング</button>
-        <button class="theme-select-button" type="button" data-theme="monotone">モノトーン</button>
-      </div>
-    </section>
+  <section class="opening-theme-picker" aria-label="デザインテーマ選択">
+    <p class="opening-theme-picker__title">デザインを選択</p>
+    <div class="opening-theme-options">
+      <button class="theme-select-button" type="button" data-theme="toyota">TOYOTA</button>
+      <button class="theme-select-button" type="button" data-theme="blueprint">設計図</button>
+      <button class="theme-select-button" type="button" data-theme="anime">アニメ</button>
+      <button class="theme-select-button" type="button" data-theme="colorful">カラフル</button>
+      <button class="theme-select-button" type="button" data-theme="healing">ヒーリング</button>
+      <button class="theme-select-button" type="button" data-theme="monotone">モノトーン</button>
+      <button class="theme-select-button" type="button" data-theme="country">カントリー</button>
+      
+
+    </div>
+  </section>
 </section>
   <main class="page">
    <header class="header">
