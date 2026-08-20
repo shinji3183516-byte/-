@@ -1144,6 +1144,15 @@ function makeTextBlock(text) {
   return paragraph;
 }
 
+function makeTitleBlock(text) {
+  const paragraph = document.createElement("p");
+  paragraph.className = "content-text content-title";
+  paragraph.textContent = text || "";
+  paragraph.style.fontWeight = "700";
+  paragraph.style.margin = "0 0 8px";
+  return paragraph;
+}
+
 function makeImageBlock(block) {
   const figure = document.createElement("figure");
   figure.className = "image-block";
@@ -1182,6 +1191,13 @@ function renderContent(sectionKey, item) {
     if (!block) return;
 
     const blockType = block.type || (block.src ? "image" : block.text ? "text" : "");
+
+    if (blockType === "title") {
+      if (block.text && block.text.trim() !== "") {
+        container.appendChild(makeTitleBlock(block.text));
+      }
+      return;
+    }
 
     if (blockType === "text") {
       if (block.text && block.text.trim() !== "") {
@@ -2828,11 +2844,31 @@ function makeSectionMap(rows) {
   const map = new Map();
   rows.forEach((row) => {
     const blocks = [];
-    if (row["名称"]) blocks.push({ type: "text", text: String(row["名称"]) });
-    if (row["説明文"]) blocks.push({ type: "text", text: String(row["説明文"]) });
-    ["画像1", "画像2", "画像3"].forEach((key) => {
-      if (row[key]) blocks.push({ type: "image", src: String(row[key]), alt: String(row["名称"] || "年表画像") });
-    });
+    const altBase = String(row["タイトル1"] || row["タイトル2"] || row["タイトル3"] || "年表画像");
+
+    // Excelの列順をそのまま表示順として扱います。
+    // タイトル1 → 写真1 → タイトル2 → 写真2 → タイトル3 → 写真3
+    for (let i = 1; i <= 3; i += 1) {
+      const title = row[`タイトル${i}`];
+      const photo = row[`写真${i}`];
+
+      if (title) {
+        blocks.push({ type: "title", text: String(title) });
+      }
+      if (photo) {
+        blocks.push({ type: "image", src: String(photo), alt: altBase });
+      }
+    }
+
+    // 旧Excel互換：従来列しかないファイルでも表示できるよう残します。
+    if (!blocks.length) {
+      if (row["名称"]) blocks.push({ type: "text", text: String(row["名称"]) });
+      if (row["説明文"]) blocks.push({ type: "text", text: String(row["説明文"]) });
+      ["画像1", "画像2", "画像3"].forEach((key) => {
+        if (row[key]) blocks.push({ type: "image", src: String(row[key]), alt: String(row["名称"] || "年表画像") });
+      });
+    }
+
     map.set(String(row.ID), blocks);
   });
   return map;
